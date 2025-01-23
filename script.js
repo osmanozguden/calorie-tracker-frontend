@@ -6,16 +6,23 @@ const calorieList = document.getElementById('calorie-list');
 const totalCalories = document.getElementById('total-calories');
 const backendUrl = 'http://localhost:3000'; // Update to match your running backend port
 
-
-// Load saved calorie entries from Local Storage when the page loads
-document.addEventListener('DOMContentLoaded', () => {
-    const savedItems = JSON.parse(localStorage.getItem('calorieEntries')) || [];
-    savedItems.forEach(item => addToList(item.food, item.calories));
-    updateTotalCalories();
+// Load saved calorie entries from the backend when the page loads
+document.addEventListener('DOMContentLoaded', async () => {
+    try {
+        const response = await fetch(`${backendUrl}/api/calories`);
+        if (!response.ok) {
+            throw new Error('Failed to fetch calorie data from backend');
+        }
+        const savedItems = await response.json();
+        savedItems.forEach(item => addToList(item.food, item.calories));
+        updateTotalCalories();
+    } catch (error) {
+        console.error('Error loading data:', error);
+    }
 });
 
 // Function to add a calorie entry
-function addCalorieEntry(event) {
+async function addCalorieEntry(event) {
     event.preventDefault();
 
     // Get input values
@@ -27,19 +34,31 @@ function addCalorieEntry(event) {
         return;
     }
 
-    // Save entry to local storage
     const entry = { food: foodItem, calories: parseInt(calorieCount) };
-    saveToLocalStorage(entry);
 
-    // Add item to the list
-    addToList(foodItem, calorieCount);
+    try {
+        const response = await fetch(`${backendUrl}/api/calories`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(entry),
+        });
 
-    // Update total calories
-    updateTotalCalories();
+        if (!response.ok) {
+            throw new Error('Failed to save entry to backend');
+        }
 
-    // Clear input fields
-    foodInput.value = "";
-    caloriesInput.value = "";
+        // Add the new item to the UI
+        addToList(foodItem, calorieCount);
+        updateTotalCalories();
+
+        // Clear input fields
+        foodInput.value = "";
+        caloriesInput.value = "";
+    } catch (error) {
+        console.error('Error saving data:', error);
+    }
 }
 
 // Function to add items to the UI list
@@ -49,17 +68,12 @@ function addToList(food, calories) {
     calorieList.appendChild(listItem);
 }
 
-// Function to save to Local Storage
-function saveToLocalStorage(entry) {
-    let items = JSON.parse(localStorage.getItem('calorieEntries')) || [];
-    items.push(entry);
-    localStorage.setItem('calorieEntries', JSON.stringify(items));
-}
-
 // Function to update total calories
 function updateTotalCalories() {
-    let items = JSON.parse(localStorage.getItem('calorieEntries')) || [];
-    let total = items.reduce((sum, item) => sum + item.calories, 0);
+    let total = 0;
+    document.querySelectorAll('#calorie-list li').forEach(item => {
+        total += parseInt(item.textContent.split(': ')[1]);
+    });
     totalCalories.textContent = total;
 }
 
