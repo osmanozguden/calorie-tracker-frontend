@@ -4,6 +4,8 @@ const foodInput = document.getElementById('food');
 const caloriesInput = document.getElementById('calories');
 const calorieList = document.getElementById('calorie-list');
 const totalCalories = document.getElementById('total-calories');
+const backendUrl = 'http://localhost:3000'; // Update to match your running backend port
+
 
 // Load saved calorie entries from Local Storage when the page loads
 document.addEventListener('DOMContentLoaded', () => {
