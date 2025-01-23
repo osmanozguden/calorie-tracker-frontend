@@ -5,6 +5,13 @@ const caloriesInput = document.getElementById('calories');
 const calorieList = document.getElementById('calorie-list');
 const totalCalories = document.getElementById('total-calories');
 
+// Load saved calorie entries from Local Storage when the page loads
+document.addEventListener('DOMContentLoaded', () => {
+    const savedItems = JSON.parse(localStorage.getItem('calorieEntries')) || [];
+    savedItems.forEach(item => addToList(item.food, item.calories));
+    updateTotalCalories();
+});
+
 // Function to add a calorie entry
 function addCalorieEntry(event) {
     event.preventDefault();
@@ -18,19 +25,40 @@ function addCalorieEntry(event) {
         return;
     }
 
-    // Create list item
-    const listItem = document.createElement('li');
-    listItem.textContent = `${foodItem}: ${calorieCount} calories`;
+    // Save entry to local storage
+    const entry = { food: foodItem, calories: parseInt(calorieCount) };
+    saveToLocalStorage(entry);
 
     // Add item to the list
-    calorieList.appendChild(listItem);
+    addToList(foodItem, calorieCount);
 
     // Update total calories
-    totalCalories.textContent = parseInt(totalCalories.textContent) + parseInt(calorieCount);
+    updateTotalCalories();
 
     // Clear input fields
     foodInput.value = "";
     caloriesInput.value = "";
+}
+
+// Function to add items to the UI list
+function addToList(food, calories) {
+    const listItem = document.createElement('li');
+    listItem.textContent = `${food}: ${calories} calories`;
+    calorieList.appendChild(listItem);
+}
+
+// Function to save to Local Storage
+function saveToLocalStorage(entry) {
+    let items = JSON.parse(localStorage.getItem('calorieEntries')) || [];
+    items.push(entry);
+    localStorage.setItem('calorieEntries', JSON.stringify(items));
+}
+
+// Function to update total calories
+function updateTotalCalories() {
+    let items = JSON.parse(localStorage.getItem('calorieEntries')) || [];
+    let total = items.reduce((sum, item) => sum + item.calories, 0);
+    totalCalories.textContent = total;
 }
 
 // Event listener for form submission
